@@ -15,7 +15,7 @@ import yaml
 import torch
 
 from tqdm import tqdm
-from pytorch_lightning.strategies.ddp import DDPStrategy
+from pytorch_lightning.strategies.single_device import SingleDeviceStrategy
 from audioldm_train.utilities.data.dataset import AudioDataset
 
 from torch.utils.data import DataLoader
@@ -62,7 +62,7 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
-        num_workers=16,
+        #num_workers=16,
         pin_memory=True,
         shuffle=True,
     )
@@ -140,12 +140,12 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
     latent_diffusion = instantiate_from_config(configs["model"])
     latent_diffusion.set_log_dir(log_path, exp_group_name, exp_name)
 
-    wandb_logger = WandbLogger(
-        save_dir=wandb_path,
-        project=configs["project"],
-        config=configs,
-        name="%s/%s" % (exp_group_name, exp_name),
-    )
+    # wandb_logger = WandbLogger(
+    #     save_dir=wandb_path,
+    #     project=configs["project"],
+    #     config=configs,
+    #     name="%s/%s" % (exp_group_name, exp_name),
+    # )
 
     latent_diffusion.test_data_subset_path = test_data_subset_folder
 
@@ -155,12 +155,12 @@ def main(configs, config_yaml_path, exp_group_name, exp_name, perform_validation
     trainer = Trainer(
         accelerator="gpu",
         devices=devices,
-        logger=wandb_logger,
+        #logger=wandb_logger,
         max_steps=max_steps,
         num_sanity_val_steps=1,
         limit_val_batches=limit_val_batches,
         check_val_every_n_epoch=validation_every_n_epochs,
-        strategy=DDPStrategy(find_unused_parameters=True),
+        strategy="auto",
         callbacks=[checkpoint_callback],
     )
 
